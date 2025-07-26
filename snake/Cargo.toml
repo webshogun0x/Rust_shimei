@@ -1,0 +1,9 @@
+[package]
+name = "snake"
+version = "0.1.0"
+edition = "2021"
+authors = ["The_Shogun8"]
+
+[dependencies]
+rand = "*"
+piston_window = "*" 
