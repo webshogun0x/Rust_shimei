@@ -1,10 +1,10 @@
-use std::collections::LinkedList;
-use piston_window::{Context, G2d};
 use piston_window::types::Color;
+use piston_window::{Context, G2d};
+use std::collections::LinkedList;
 
 use crate::draw::draw_block;
 
-const SNAKE_COLOR: Color = [0.0, 0.80, 0.0, 1.0]; 
+const SNAKE_COLOR: Color = [0.0, 0.80, 0.0, 1.0];
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -39,7 +39,7 @@ pub struct Snake {
 
 impl Snake {
     pub fn new(x: u32, y: u32) -> Snake {
-        let mut body:LinkedList<Block> = LinkedList::new();
+        let mut body: LinkedList<Block> = LinkedList::new();
         body.push_back(Block { x: x + 2, y });
         body.push_back(Block { x: x + 1, y });
         body.push_back(Block { x, y });
@@ -71,10 +71,22 @@ impl Snake {
         let (last_x, last_y): (u32, u32) = self.head_position();
 
         let new_block = match self.direction {
-            Direction::Up => Block { x:last_x, y:last_y - 1},
-            Direction::Down => Block { x: last_x, y: last_y + 1},
-            Direction::Left => Block { x: last_x - 1, y: last_y },
-            Direction::Right => Block { x: last_x + 1, y: last_y},
+            Direction::Up => Block {
+                x: last_x,
+                y: last_y - 1,
+            },
+            Direction::Down => Block {
+                x: last_x,
+                y: last_y + 1,
+            },
+            Direction::Left => Block {
+                x: last_x - 1,
+                y: last_y,
+            },
+            Direction::Right => Block {
+                x: last_x + 1,
+                y: last_y,
+            },
         };
         self.body.push_front(new_block);
         let remove_block = self.body.pop_back().unwrap();
@@ -103,7 +115,7 @@ impl Snake {
         }
     }
 
-    pub fn overlap_tail(&self, x:u32, y:u32) -> bool {
+    pub fn overlap_tail(&self, x: u32, y: u32) -> bool {
         let mut ch = 0;
         for block in &self.body {
             if x == block.x && y == block.y {
@@ -116,8 +128,4 @@ impl Snake {
         }
         return false;
     }
-
-
 }
-
-

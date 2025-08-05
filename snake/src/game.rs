@@ -1,10 +1,10 @@
-use piston_window::*;
 use piston_window::types::Color;
+use piston_window::*;
 
 use rand::Rng;
 
-use crate::snake::{Direction, Snake};
 use crate::draw::{draw_block, draw_rectangle};
+use crate::snake::{Direction, Snake};
 
 const FOOD_COLOR: Color = [0.80, 0.0, 0.0, 1.0];
 const BOARDER_COLOR: Color = [0.0, 0.0, 0.0, 1.0];
@@ -19,16 +19,16 @@ pub struct Game {
     food_exits: bool,
     food_x: u32,
     food_y: u32,
-    
+
     width: u32,
     height: u32,
-    
+
     game_over: bool,
     waiting_time: f64,
 }
 
 impl Game {
-    pub fn new(width:u32 , height:u32 ) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Game {
             snake: Snake::new(2, 2),
             food_exits: true,
@@ -76,41 +76,56 @@ impl Game {
 
         draw_rectangle(BOARDER_COLOR, 0.0, 0.0, self.width as f64, 1.0, con, g);
         draw_rectangle(BOARDER_COLOR, 0.0, 0.0, 1.0, self.height as f64, con, g);
-        draw_rectangle(BOARDER_COLOR, (self.width - 1) as f64, 0.0, 1.0, self.height as f64, con, g);
-        draw_rectangle(BOARDER_COLOR, 0.0, (self.height - 1) as f64, self.width as f64, 1.0, con, g);
+        draw_rectangle(
+            BOARDER_COLOR,
+            (self.width - 1) as f64,
+            0.0,
+            1.0,
+            self.height as f64,
+            con,
+            g,
+        );
+        draw_rectangle(
+            BOARDER_COLOR,
+            0.0,
+            (self.height - 1) as f64,
+            self.width as f64,
+            1.0,
+            con,
+            g,
+        );
 
         if self.game_over {
-            draw_rectangle(GAME_OVER_COLOR, 0.0, 0.0, self.width as f64, self.height as f64, con, g);
+            draw_rectangle(
+                GAME_OVER_COLOR,
+                0.0,
+                0.0,
+                self.width as f64,
+                self.height as f64,
+                con,
+                g,
+            );
 
             // Draw "GAME IS OVER"
             let game_over_text = "GAME IS OVER";
             let score_text = format!("Score: {}", self.snake.body.len() - 3); // assuming initial length is 3
 
             let transform = con.transform.trans(
-                self.width as f64 * 10.0, // center horizontally
+                self.width as f64 * 10.0,  // center horizontally
                 self.height as f64 * 12.0, // position vertically
             );
-            
-            let score_transform = con.transform.trans(
-                self.width as f64 * 10.0,
-                self.height as f64 * 16.0,
-            );
 
-            Text::new_color([1.0, 1.0, 1.0, 1.0], 48).draw(
-                game_over_text,
-                glyphs,
-                &con.draw_state,
-                transform,
-                g,
-            ).ok();
+            let score_transform = con
+                .transform
+                .trans(self.width as f64 * 10.0, self.height as f64 * 16.0);
 
-            Text::new_color([1.0, 1.0, 1.0, 1.0], 32).draw(
-                &score_text,
-                glyphs,
-                &con.draw_state,
-                score_transform,
-                g,
-            ).ok();
+            Text::new_color([1.0, 1.0, 1.0, 1.0], 48)
+                .draw(game_over_text, glyphs, &con.draw_state, transform, g)
+                .ok();
+
+            Text::new_color([1.0, 1.0, 1.0, 1.0], 32)
+                .draw(&score_text, glyphs, &con.draw_state, score_transform, g)
+                .ok();
         }
     }
     pub fn update(&mut self, dt: f64) {
@@ -173,20 +188,18 @@ impl Game {
         if self.check_if_snake_alive(dir) {
             self.snake.move_forward(dir);
             self.check_eating();
-        } 
-        else {
+        } else {
             self.game_over = true;
             self.waiting_time = 0.0;
         }
     }
 
     fn restart(&mut self) {
-        self.snake = Snake::new(2 ,2);
+        self.snake = Snake::new(2, 2);
         self.food_exits = false;
         self.game_over = false;
         self.waiting_time = 0.0;
         self.food_y = 6;
         self.food_x = 4;
     }
-    
 }
