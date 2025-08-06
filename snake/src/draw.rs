@@ -8,7 +8,7 @@ pub fn to_coord(game_coord: u32) -> f64 {
 }
 
 pub fn to_coord_u32(game_coord: u32) -> u32 {
-    (game_coord as f64 * BLOCK_SIZE) as u32
+    game_coord * BLOCK_SIZE as u32
 }
 
 pub fn draw_block(color: Color, x: u32, y: u32, con: &Context, g: &mut G2d) {

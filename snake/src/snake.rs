@@ -4,7 +4,7 @@ use std::collections::LinkedList;
 
 use crate::draw::draw_block;
 
-const SNAKE_COLOR: Color = [0.0, 0.80, 0.0, 1.0];
+const SNAKE_COLOR: Color = [0.0, 0.0, 0.0, 1.0];
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -116,16 +116,6 @@ impl Snake {
     }
 
     pub fn overlap_tail(&self, x: u32, y: u32) -> bool {
-        let mut ch = 0;
-        for block in &self.body {
-            if x == block.x && y == block.y {
-                return true;
-            }
-            ch += 1;
-            if ch == self.body.len() - 1 {
-                break;
-            }
-        }
-        return false;
+        self.body.iter().skip(1).any(|block| block.x == x && block.y == y)
     }
 }

@@ -13,17 +13,21 @@ const GAME_OVER_COLOR: Color = [0.70, 0.50, 0.0, 1.0];
 const MOVING_PERIOD: f64 = 0.20;
 const RESTART_TIME: f64 = 2.0;
 
+#[derive(PartialEq)]
+pub enum GameState {
+    Playing,
+    Paused,
+    GameOver,
+}
+
 pub struct Game {
     snake: Snake,
-
     food_exits: bool,
     food_x: u32,
     food_y: u32,
-
     width: u32,
     height: u32,
-
-    game_over: bool,
+    state: GameState,
     waiting_time: f64,
 }
 
@@ -36,13 +40,25 @@ impl Game {
             food_y: 4,
             width,
             height,
-            game_over: false,
+            state: GameState::Playing,
             waiting_time: 0.0,
         }
     }
 
     pub fn key_pressed(&mut self, key: Key) {
-        if self.game_over {
+        match key {
+            Key::Space => {
+                if self.state == GameState::Playing {
+                    self.state = GameState::Paused;
+                } else if self.state == GameState::Paused {
+                    self.state = GameState::Playing;
+                }
+                return;
+            }
+            _ => {}
+        }
+
+        if self.state != GameState::Playing {
             return;
         }
 
@@ -58,7 +74,6 @@ impl Game {
             return;
         }
 
-        // Check if the next head position would overlap the body
         let (next_x, next_y) = self.snake.next_head(Some(new_direction));
         if self.snake.overlap_tail(next_x, next_y) {
             return;
@@ -74,28 +89,22 @@ impl Game {
             draw_block(FOOD_COLOR, self.food_x, self.food_y, con, g);
         }
 
-        draw_rectangle(BOARDER_COLOR, 0.0, 0.0, self.width as f64, 1.0, con, g);
-        draw_rectangle(BOARDER_COLOR, 0.0, 0.0, 1.0, self.height as f64, con, g);
-        draw_rectangle(
-            BOARDER_COLOR,
-            (self.width - 1) as f64,
-            0.0,
-            1.0,
-            self.height as f64,
-            con,
-            g,
-        );
-        draw_rectangle(
-            BOARDER_COLOR,
-            0.0,
-            (self.height - 1) as f64,
-            self.width as f64,
-            1.0,
-            con,
-            g,
-        );
+        // Draw border
+        let w = self.width as f64;
+        let h = self.height as f64;
+        draw_rectangle(BOARDER_COLOR, 0.0, 0.0, w, 1.0, con, g);
+        draw_rectangle(BOARDER_COLOR, 0.0, 0.0, 1.0, h, con, g);
+        draw_rectangle(BOARDER_COLOR, w - 1.0, 0.0, 1.0, h, con, g);
+        draw_rectangle(BOARDER_COLOR, 0.0, h - 1.0, w, 1.0, con, g);
 
-        if self.game_over {
+        if self.state == GameState::Paused {
+            let pause_text = "PAUSED - Press SPACE to continue";
+            let transform = con.transform.trans(self.width as f64 * 5.0, self.height as f64 * 12.0);
+            Text::new_color([1.0, 1.0, 1.0, 1.0], 24)
+                .draw(pause_text, glyphs, &con.draw_state, transform, g).ok();
+        }
+
+        if self.state == GameState::GameOver {
             draw_rectangle(
                 GAME_OVER_COLOR,
                 0.0,
@@ -106,13 +115,12 @@ impl Game {
                 g,
             );
 
-            // Draw "GAME IS OVER"
             let game_over_text = "GAME IS OVER";
-            let score_text = format!("Score: {}", self.snake.body.len() - 3); // assuming initial length is 3
+            let score_text = format!("Score: {}", self.snake.body.len() - 3);
 
             let transform = con.transform.trans(
-                self.width as f64 * 10.0,  // center horizontally
-                self.height as f64 * 12.0, // position vertically
+                self.width as f64 * 10.0,
+                self.height as f64 * 12.0,
             );
 
             let score_transform = con
@@ -129,22 +137,24 @@ impl Game {
         }
     }
     pub fn update(&mut self, dt: f64) {
-        self.waiting_time += dt;
-
-        if self.game_over {
-            if self.waiting_time > RESTART_TIME {
-                self.restart();
+        if self.state != GameState::Playing {
+            if self.state == GameState::GameOver {
+                self.waiting_time += dt;
+                if self.waiting_time > RESTART_TIME {
+                    self.restart();
+                }
             }
             return;
         }
 
+        self.waiting_time += dt;
         if !self.food_exits {
             self.add_food();
         }
 
         if self.waiting_time > MOVING_PERIOD {
             self.update_snake(None);
-            self.waiting_time = 0.0; // <-- Reset after move
+            self.waiting_time = 0.0;
         }
     }
 
@@ -170,18 +180,16 @@ impl Game {
 
     fn add_food(&mut self) {
         let mut rng = rand::rng();
-
-        let mut new_x = rng.random_range(1..self.width - 1);
-        let mut new_y = rng.random_range(1..self.height - 1);
-
-        while self.snake.overlap_tail(new_x, new_y) {
-            new_x = rng.random_range(1..self.width - 1);
-            new_y = rng.random_range(1..self.height - 1);
+        loop {
+            let new_x = rng.random_range(1..self.width - 1);
+            let new_y = rng.random_range(1..self.height - 1);
+            if !self.snake.overlap_tail(new_x, new_y) {
+                self.food_x = new_x;
+                self.food_y = new_y;
+                self.food_exits = true;
+                break;
+            }
         }
-
-        self.food_exits = true;
-        self.food_x = new_x;
-        self.food_y = new_y;
     }
 
     fn update_snake(&mut self, dir: Option<Direction>) {
@@ -189,7 +197,7 @@ impl Game {
             self.snake.move_forward(dir);
             self.check_eating();
         } else {
-            self.game_over = true;
+            self.state = GameState::GameOver;
             self.waiting_time = 0.0;
         }
     }
@@ -197,9 +205,17 @@ impl Game {
     fn restart(&mut self) {
         self.snake = Snake::new(2, 2);
         self.food_exits = false;
-        self.game_over = false;
+        self.state = GameState::Playing;
         self.waiting_time = 0.0;
         self.food_y = 6;
         self.food_x = 4;
+    }
+
+    pub fn get_score(&self) -> u32 {
+        (self.snake.body.len() - 3) as u32
+    }
+
+    pub fn is_game_over(&self) -> bool {
+        self.state == GameState::GameOver
     }
 }

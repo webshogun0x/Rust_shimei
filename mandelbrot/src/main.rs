@@ -106,5 +106,5 @@ fn main() {
 
     render(&mut pixel, bounds, upper_left, lower_right);
 
-    write_file(&args[0], &pixel, &bounds).expect("error writing PNG file")
+    write_file(&args[1], &pixel, &bounds).expect("error writing PNG file")
 }
